@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mô phỏng thí nghiệm Vật Lý Nhiệt Lớp 12: Dao động phân tử & Các quá trình chuyển thể">
+    <meta name="author" content="Dự án Giáo dục Vật Lý">
+    <title>Vật Lý Nhiệt - Chuyển thể & Dao động Phân tử | Lớp 12 THPT</title>
+    
+    <!-- Thư viện -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .molecule {
+                @apply absolute rounded-full transition-all duration-300;
+            }
+            .state-solid {
+                @apply bg-gradient-to-br from-blue-500 to-blue-700;
+            }
+            .state-liquid {
+                @apply bg-gradient-to-br from-green-500 to-green-600;
+            }
+            .state-gas {
+                @apply bg-gradient-to-br from-orange-500 to-red-500;
+            }
+            .simulation-box {
+                @apply relative w-full h-[400px] rounded-2xl border-4 border-blue-700 bg-gradient-to-b from-sky-100 to-emerald-50 overflow-hidden;
+            }
+            .card {
+                @apply bg-white/85 backdrop-blur-md rounded-2xl shadow-lg p-6;
+            }
+            .phase-btn {
+                @apply py-3 rounded-xl font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+            }
+            .highlight {
+                @apply bg-yellow-100 px-1.5 rounded;
+            }
+        }
+    </style>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        * { font-family: 'Nunito', sans-serif; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; height: 12px; border-radius: 999px; background: linear-gradient(to right, #3b82f6, #22c55e, #f97316, #ef4444); }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 3px solid #3b82f6; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 via-white to-emerald-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-emerald-500 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-[clamp(1.5rem,4vw,2.5rem)] font-extrabold">
+                <i class="fa fa-flask mr-2"></i> Thí nghiệm Vật Lý Nhiệt
+            </h1>
+            <p class="text-lg mt-2 opacity-90">Dao động phân tử • Trạng thái vật chất • Quá trình chuyển thể</p>
+            <p class="mt-1 text-sm opacity-80">Môn Vật Lý — Lớp 12 THPT</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Giới thiệu kiến thức -->
+        <section class="card mb-8">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">
+                <i class="fa fa-lightbulb-o text-yellow-500 mr-2"></i> Kiến thức cơ bản
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-lg mb-2">Chuyển động nhiệt của phân tử</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        Tất cả các phân tử đều chuyển động không ngừng. Nhiệt độ càng cao, chuyển động phân tử càng nhanh, biên độ dao động càng <span class="highlight">lớn</span>. Năng lượng chuyển động này gọi là năng lượng nhiệt.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-2">Ba trạng thái chính</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li><span class="font-bold text-blue-600">❄️ Rắn:</span> Phân tử dao động quanh vị trí cố định, liên kết chặt chẽ</li>
+                        <li><span class="font-bold text-green-600">💧 Lỏng:</span> Chuyển động tự do trong thể tích nhất định, liên kết yếu hơn</li>
+                        <li><span class="font-bold text-orange-500">☁️ Khí:</span> Chuyển động rất nhanh, tự do, khoảng cách giữa phân tử rất xa</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Khu mô phỏng -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">
+                <i class="fa fa-cogs text-blue-600 mr-2"></i> Mô phỏng thí nghiệm
+            </h2>
+            
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Bảng điều khiển -->
+                <div class="card">
+                    <h3 class="font-bold text-lg text-center mb-4 text-gray-700">Bảng điều khiển</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block font-semibold mb-2">
+                            Nhiệt độ: <span id="temp-value" class="text-blue-600">25°C</span>
+                        </label>
+                        <input type="range" id="temp-slider" min="-50" max="200" value="25" class="w-full cursor-pointer">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p class="font-semibold mb-2">Chọn trạng thái nhanh:</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button id="btn-solid" class="phase-btn bg-blue-500">Rắn</button>
+                            <button id="btn-liquid" class="phase-btn bg-green-500">Lỏng</button>
+                            <button id="btn-gas" class="phase-btn bg-orange-500">Khí</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 mt-4">
+                        <button id="btn-heat" class="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl font-bold">
+                            <i class="fa fa-fire mr-2"></i> Nóng dần (+10°C)
+                        </button>
+                        <button id="btn-cool" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-2.5 rounded-xl font-bold">
+                            <i class="fa fa-snowflake-o mr-2"></i> Lạnh dần (-10°C)
+                        </button>
+                        <button id="btn-reset" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-2.5 rounded-xl font-bold">
+                            <i class="fa fa-refresh mr-2"></i> Đặt lại
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                        <p class="font-bold text-blue-700">Trạng thái hiện tại:</p>
+                        <p id="current-state" class="text-lg font-semibold text-green-600">Lỏng</p>
+                        <p id="note" class="text-sm text-gray-600 mt-1">Phân tử chuyển động tự do trong thể tích nhất định</p>
+                    </div>
+                </div>
+
+                <!-- Khung mô phỏng -->
+                <div class="lg:col-span-2">
+                    <div class="card h-full">
+                        <h3 class="font-bold text-center mb-3 text-gray-700">Mô hình chuyển động phân tử</h3>
+                        <div id="simulation-box" class="simulation-box mx-auto"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bảng tóm tắt chuyển thể -->
+        <section class="card mb-8">
+            <h2 class="text-2xl font-bold text-emerald-700 mb-4">
+                <i class="fa fa-table mr-2"></i> Các quá trình chuyển thể
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-100">
+                            <th class="p-3 border-2 border-emerald-200">Quá trình</th>
+                            <th class="p-3 border-2 border-emerald-200">Trạng thái thay đổi</th>
+                            <th class="p-3 border-2 border-emerald-200">Bản chất phân tử</th>
+                            <th class="p-3 border-2 border-emerald-200">Dòng nhiệt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-3 border-2 border-emerald-200 font-bold text-blue-600">Nóng chảy</td>
+                            <td class="p-3 border-2 border-emerald-200">Rắn → Lỏng</td>
+                            <td class="p-3 border-2 border-emerald-200">Phá vỡ cấu trúc cố định, phân tử chuyển động tự do hơn</td>
+                            <td class="p-3 border-2 border-emerald-200 text-green-600 font-medium">Thu nhiệt</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="p-3 border-2 border-emerald-200 font-bold text-green-600">Hóa hơi</td>
+                            <td class="p-3 border-2 border-emerald-200">Lỏng → Khí</td>
+                            <td class="p-3 border-2 border-emerald-200">Phân tử tách xa nhau, chuyển động tự do hoàn toàn</td>
+                            <td class="p-3 border-2 border-emerald-200 text-green-600 font-medium">Thu nhiệt</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border-2 border-emerald-200 font-bold text-cyan-600">Đông đặc</td>
+                            <td class="p-3 border-2 border-emerald-200">Lỏng → Rắn</td>
+                            <td class="p-3 border-2 border-emerald-200">Chuyển động chậm, sắp xếp có trật tự</td>
+                            <td class="p-3 border-2 border-emerald-200 text-red-500 font-medium">Tỏa nhiệt</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="p-3 border-2 border-emerald-200 font-bold text-purple-600">Ngưng tụ</td>
+                            <td class="p-3 border-2 border-emerald-200">Khí → Lỏng</td>
+                            <td class="p-3 border-2 border-emerald-200">Chuyển động chậm lại, liên kết trở thành khối</td>
+                            <td class="p-3 border-2 border-emerald-200 text-red-500 font-medium">Tỏa nhiệt</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Tự kiểm tra -->
+        <section class="card">
+            <h2 class="text-2xl font-bold text-purple-700 mb-4">
+                <i class="fa fa-question-circle mr-2"></i> Tự kiểm tra kiến thức
+            </h2>
+            <div class="space-y-5">
+                <div class="p-4 bg-purple-50 rounded-lg">
+                    <p class="font-semibold mb-2">1. Tại sao trong quá trình nóng chảy, nhiệt độ không tăng dù vẫn cấp nhiệt?</p>
+                    <button onclick="document.getElementById('ans1').classList.toggle('hidden')" 
+                        class="text-purple-600 font-medium hover:underline">Xem đáp án</button>
+                    <p id="ans1" class="hidden mt-2 text-gray-700 bg-white p-3 rounded-lg">
+                        Nhiệt lượng cung cấp được dùng để phá vỡ liên kết giữa các phân tử, chứ không phải để tăng tốc độ chuyển động phân tử → nhiệt độ không đổi trong suốt quá trình chuyển thể.
+                    </p>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg">
+                    <p class="font-semibold mb-2">2. Nhiệt độ tuyệt đối (0 K ≈ -273°C) có ý nghĩa gì?</p>
+                    <button onclick="document.getElementById('ans2').classList.toggle('hidden')" 
+                        class="text-purple-600 font-medium hover:underline">Xem đáp án</button>
+                    <p id="ans2" class="hidden mt-2 text-gray-700 bg-white p-3 rounded-lg">
+                        Là nhiệt độ thấp nhất về mặt lý thuyết, tại đó chuyển động nhiệt của phân tử dừng lại hoàn toàn. Đây là giới hạn không thể đạt được trong thực nghiệm.
+                    </p>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg">
+                    <p class="font-semibold mb-2">3. Năng lượng nội tại của vật thay đổi như thế nào khi chuyển từ rắn sang lỏng?</p>
+                    <button onclick="document.getElementById('ans3').classList.toggle('hidden')" 
+                        class="text-purple-600 font-medium hover:underline">Xem đáp án</button>
+                    <p id="ans3" class="hidden mt-2 text-gray-700 bg-white p-3 rounded-lg">
+                        Năng lượng nội tại tăng lên, vì ngoài năng lượng chuyển động, vật còn nhận thêm năng lượng để làm tăng thế năng tương tác giữa các phân tử, phá vỡ cấu trúc rắn.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-5 mt-10 text-center">
+        <p class="mb-1">📚 Thí nghiệm Vật Lý 12 — Chuyển thể & Dao động phân tử</p>
+        <p class="text-sm text-gray-400">Phát triển cho mục đích giáo dục • Mã nguồn mở trên GitHub</p>
+    </footer>
+
+    <script>
+        // === Khởi tạo biến ===
+        const box = document.getElementById('simulation-box');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempValue = document.getElementById('temp-value');
+        const currentStateEl = document.getElementById('current-state');
+        const noteEl = document.getElementById('note');
+        
+        let molecules = [];
+        let animationId = null;
+        let temperature = 25; // °C
+        const moleculeCount = 40;
+
+        // === Cấu hình theo trạng thái ===
+        const stateConfig = {
+            solid: {
+                name: 'Rắn',
+                note: 'Phân tử dao động quanh vị trí cố định, liên kết chặt chẽ',
+                speed: 0.5,
+                size: 14,
+                colorClass: 'state-solid'
+            },
+            liquid: {
+                name: 'Lỏng',
+                note: 'Phân tử chuyển động tự do trong thể tích nhất định, liên kết yếu hơn',
+                speed: 2.0,
+                size: 12,
+                colorClass: 'state-liquid'
+            },
+            gas: {
+                name: 'Khí',
+                note: 'Phân tử chuyển động rất nhanh, tự do, khoảng cách rất xa',
+                speed: 5.0,
+                size: 10,
+                colorClass: 'state-gas'
+            }
+        };
+
+        // === Tạo phân tử ===
+        function createMolecules() {
+            box.innerHTML = '';
+            molecules = [];
+            const w = box.clientWidth;
+            const h = box.clientHeight;
+            
+            for (let i = 0; i < moleculeCount; i++) {
+                const el = document.createElement('div');
+                el.classList.add('molecule');
+                box.appendChild(el);
+                
+                const mol = {
+                    el,
+                    x: (w / 8) * (i % 8) + 25,
+                    y: Math.floor(i / 8) * (h / 6) + 35,
+                    baseX: 0,
+                    baseY: 0,
+                    vx: 0,
+                    vy: 0
+                };
+                mol.baseX = mol.x;
+                mol.baseY = mol.y;
+                molecules.push(mol);
+            }
+        }
+
+        // === Xác định trạng thái theo nhiệt độ ===
+        function getState(temp) {
+            if (temp < 0) return 'solid';
+            if (temp < 100) return 'liquid';
+            return 'gas';
+        }
+
+        // === Cập nhật giao diện trạng thái ===
+        function updateStateUI(state) {
+            const cfg = stateConfig[state];
+            currentStateEl.textContent = cfg.name;
+            currentStateEl.className = `text-lg font-semibold ${
+                state === 'solid' ? 'text-blue-600' : 
+                state === 'liquid' ? 'text-green-600' : 'text-orange-500'
+            }`;
+            noteEl.textContent = cfg.note;
+            
+            // Đánh dấu nút đang chọn
+            document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
+            document.getElementById(`btn-${state}`).classList.add('ring-4', 'ring-yellow-400');
+        }
+
+        // === Vòng lặp hoạt hình ===
+        function animate() {
+            const state = getState(temperature);
+            const cfg = stateConfig[state];
+            const w = box.clientWidth;
+            const h = box.clientHeight;
+            const tempFactor = 1 + (temperature + 50) / 250; // Hệ số tốc độ theo nhiệt độ
+
+            molecules.forEach(mol => {
+                // Thêm chuyển động ngẫu nhiên
+                mol.vx += (Math.random() - 0.5) * cfg.speed * tempFactor * 0.3;
+                mol.vy += (Math.random() - 0.5) * cfg.speed * tempFactor * 0.3;
+
+                // Giữ phân tử quanh vị trí cơ sở nếu là rắn
+                if (state === 'solid') {
+                    mol.x += (mol.baseX - mol.x) * 0.1;
+                    mol.y += (mol.baseY - mol.y) * 0.1;
+                }
+
+                // Cập nhật vị trí
+                mol.x += mol.vx;
+                mol.y += mol.vy;
+
+                // Va chạm với thành hộp
+                if (mol.x < 10 || mol.x > w - 25) mol.vx *= -0.8;
+                if (mol.y < 10 || mol.y > h - 25) mol.vy *= -0.8;
+                mol.x = Math.max(10, Math.min(w - 25, mol.x));
+                mol.y = Math.max(10, Math.min(h - 25, mol.y));
+
+                // Tắt dần vận tốc
+                mol.vx *= 0.96;
+                mol.vy *= 0.96;
+
+                // Vẽ phân tử
+                mol.el.style.left = `${mol.x}px`;
+                mol.el.style.top = `${mol.y}px`;
+                mol.el.style.width = `${cfg.size}px`;
+                mol.el.style.height = `${cfg.size}px`;
+                mol.el.className = `molecule ${cfg.colorClass}`;
+            });
+
+            updateStateUI(state);
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // === Cập nhật hiển thị nhiệt độ ===
+        function updateTempDisplay() {
+            tempValue.textContent = `${temperature}°C`;
+            tempSlider.value = temperature;
+        }
+
+        // === Gắn sự kiện ===
+        tempSlider.addEventListener('input', e => {
+            temperature = parseInt(e.target.value);
+            updateTempDisplay();
+        });
+
+        document.getElementById('btn-solid').addEventListener('click', () => {
+            temperature = -20; updateTempDisplay();
+        });
+        document.getElementById('btn-liquid').addEventListener('click', () => {
+            temperature = 50; updateTempDisplay();
+        });
+        document.getElementById('btn-gas').addEventListener('click', () => {
+            temperature = 150; updateTempDisplay();
+        });
+        document.getElementById('btn-heat').addEventListener('click', () => {
+            if (temperature < 200) { temperature += 10; updateTempDisplay(); }
+        });
+        document.getElementById('btn-cool').addEventListener('click', () => {
+            if (temperature > -50) { temperature -= 10; updateTempDisplay(); }
+        });
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            temperature = 25; updateTempDisplay(); createMolecules();
+        });
+
+        // === Khởi chạy ===
+        window.addEventListener('load', () => {
+            createMolecules();
+            animate();
+        });
+        window.addEventListener('resize', createMolecules);
+    </script>
+</body>
+</html>
